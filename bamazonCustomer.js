@@ -42,13 +42,30 @@ function displayAvailable() {
         function (err, res) {
             if (err) throw err;
             for (i = 0; i < res.length; i++) {
-                console.log(res[i].product_name + " from the " + res[i].department_name + " department at a price of $" + res[i].price + " each.");
+                console.log(chalk.magenta(res[i].product_name) + " from the " + res[i].department_name +
+                 " department at a price of " + chalk.green("$") + chalk.green(res[i].price) + " each. " +
+                  chalk.blue(res[i].stock_quantity) + " in stock.");
             }
             console.log("");
         });
     buying();
 
 };
+
+function updateDB(minus, ident) {
+    con.query("UPDATE products SET ? WHERE ?",
+    [
+        {
+          stock_quantity: minus 
+        },
+        {
+            item_id: ident
+        }
+    ], function(err, res) {
+        console.log(chalk.green("Thank You for choosing Bamazon, your order will arrive someday."))
+    });
+};
+
 
 function buying() {
     con.query("SELECT * FROM products", function (err, results) {
@@ -79,10 +96,14 @@ function buying() {
 
             };
             if (answer.quantity > chosenItem.stock_quantity) {
-                console.log("We apologize but your order exceeds our capacity.")
+                console.log(chalk.red("We apologize but your order exceeds our capacity."));
             } else {
+                let subtract = chosenItem.stock_quantity - answer.quantity;
+                let itemId = chosenItem.item_id;
                 console.log("");
                 console.log("Your total is: $" + answer.quantity * chosenItem.price);
+                updateDB(subtract, itemId);
+
             }
             con.end();
         })
